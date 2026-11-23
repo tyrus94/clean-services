@@ -46,7 +46,7 @@ The four main website images are now regular HTML `<img>` elements in `index.htm
 The PSEO setup includes:
 - `towns.csv` — 84 selected towns and their counties/regions.
 - `town-template.html` — shared HTML template for each location page.
-- `generate_pages.py` — generates one page per CSV row under `towns/<town-slug>/` and a town directory at `towns/index.html`. When `SITE_URL` is set, it also writes a root `sitemap.xml`.
+- `generate_pages.py` — generates one page per CSV row under `towns/<town-slug>/` and a town directory at `towns/index.html`. It also refreshes the **Locations** section on the homepage (`index.html`, between the `<!-- LOCATIONS:START -->` and `<!-- LOCATIONS:END -->` markers) with a link to every town, grouped by region. When `SITE_URL` is set, it also writes a root `sitemap.xml`.
 
 ### Generate pages
 
@@ -68,6 +68,8 @@ On Windows PowerShell:
 $env:SITE_URL="https://www.yourdomain.co.ke"
 python generate_pages.py
 ```
+
+Add or remove towns by editing `towns.csv` only, then re-run the script; the pages, the directory and the homepage Locations links all update together. Do not edit the block between the LOCATIONS markers by hand, as it is overwritten on each run.
 
 Upload the generated `towns` folder together with `index.html`, `styles.css` and `script.js` to the website root. The generated pages use root-relative asset paths so they can share the main site's CSS and JavaScript.
 

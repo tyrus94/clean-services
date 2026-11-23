@@ -6,3 +6,7 @@
 .footer-credit{margin-left:12px;padding-left:12px;border-left:1px solid #c9bda9}.footer-credit a{color:var(--sage);font-weight:700}
 
 .town-directory{columns:2;column-gap:50px;padding-left:20px;margin-top:35px}.town-directory li{break-inside:avoid;padding:10px 0;border-bottom:1px solid var(--sand);font-size:13px}.town-directory a{color:var(--sage);font-weight:700}.town-directory span{color:var(--muted);font-size:11px}@media(max-width:600px){.town-directory{columns:1}}
+
+.location-groups{display:grid;grid-template-columns:repeat(3,1fr);gap:45px 50px}.location-group h3{font:500 22px/1.2 var(--serif);margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--sand);display:flex;justify-content:space-between;align-items:baseline}.location-group h3 small{font:9px var(--sans);letter-spacing:.1em;color:var(--champagne)}.location-links{list-style:none;margin:0;padding:0;columns:2;column-gap:24px}.location-links li{break-inside:avoid;padding:6px 0;font-size:12px}.location-links a{color:var(--ink);border-bottom:1px solid transparent;transition:.2s ease}.location-links a:hover,.location-links a:focus-visible{color:var(--sage);border-bottom-color:var(--champagne)}
+@media(max-width:1050px){.location-groups{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.location-groups{grid-template-columns:1fr;gap:35px}}

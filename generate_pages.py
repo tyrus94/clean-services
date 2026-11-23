@@ -10,6 +10,7 @@ Optional canonical domain:
 Output:
     towns/<town-slug>/index.html
     towns/index.html
+    index.html  (the Locations section between the LOCATIONS markers is refreshed)
 """
 from pathlib import Path
 from urllib.parse import quote
@@ -23,6 +24,9 @@ SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
 PHONE_DISPLAY = "+254 706 855633"
 PHONE_TEL = "+254706855633"
 WHATSAPP_NUMBER = "254706855633"
+HOME_FILE = BASE_DIR / "index.html"
+LOCATIONS_START = "<!-- LOCATIONS:START -->"
+LOCATIONS_END = "<!-- LOCATIONS:END -->"
 
 
 def slugify(value: str) -> str:
@@ -54,6 +58,42 @@ def build_town_options(town_rows: list, current_town: str = "") -> str:
         options.append(f'<option value="{html.escape(label, quote=True)}">{html.escape(label)}</option>')
     options.append('<option value="Other / Not listed">Other / Not listed</option>')
     return "\n            ".join(options)
+
+
+def build_locations_html(town_rows: list) -> str:
+    """Town links for the homepage Locations section, grouped by region (CSV order)."""
+    groups = {}
+    for item in town_rows:
+        groups.setdefault(item["region"] or "Other", []).append(item)
+    blocks = []
+    for region, items in groups.items():
+        links = "\n".join(
+            f'            <li><a href="/towns/{html.escape(i["slug"])}/" '
+            f'title="Cleaning services in {html.escape(i["town"], quote=True)}, {html.escape(i["county"], quote=True)} County">'
+            f'{html.escape(i["town"])}</a></li>'
+            for i in items
+        )
+        blocks.append(
+            f'        <div class="location-group">\n'
+            f'          <h3>{html.escape(region)} <small>{len(items)} TOWNS</small></h3>\n'
+            f'          <ul class="location-links">\n{links}\n          </ul>\n'
+            f'        </div>'
+        )
+    return '      <div class="location-groups">\n' + "\n".join(blocks) + "\n      </div>"
+
+
+def update_homepage_locations(town_rows: list) -> bool:
+    """Rewrite the block between the LOCATIONS markers in index.html."""
+    if not HOME_FILE.exists():
+        return False
+    page = HOME_FILE.read_text(encoding="utf-8")
+    if LOCATIONS_START not in page or LOCATIONS_END not in page:
+        return False
+    block = build_locations_html(town_rows)
+    pattern = re.compile(re.escape(LOCATIONS_START) + r".*?" + re.escape(LOCATIONS_END), re.S)
+    page = pattern.sub(lambda m: f"{LOCATIONS_START}\n{block}\n      {LOCATIONS_END}", page, count=1)
+    HOME_FILE.write_text(page, encoding="utf-8")
+    return True
 
 
 def main() -> None:
@@ -144,6 +184,8 @@ def main() -> None:
     directory_page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cleaning Service Locations in Kenya | Cleaning Services Kenya</title><meta name="description" content="Browse our cleaning service enquiry pages for towns across Kenya."><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><a class="brand" href="/"><span class="brand-name">CLEANING SERVICES <b>KENYA</b></span></a><nav class="main-nav"><a href="/">Home</a><a href="/#services">Services</a><a href="/#contact">Contact</a></nav></header><main class="section"><p class="eyebrow">OUR LOCATIONS</p><h1>Cleaning service locations across Kenya</h1><p>Choose a town to enquire about residential or commercial cleaning. Service availability is confirmed individually.</p><ul class="town-directory">{links}</ul></main><footer class="site-footer"><a href="/">Cleaning Services Kenya</a><small>Made by Lumen Labs</small></footer></body></html>"""
     (OUTPUT_DIR / "index.html").write_text(directory_page, encoding="utf-8")
 
+    homepage_updated = update_homepage_locations(valid_towns)
+
     if SITE_URL:
         sitemap_urls = [f"{SITE_URL}/"] + [f"{SITE_URL}/towns/{slug}/" for _, _, slug in index_cards]
         sitemap_body = "\n".join(f"  <url><loc>{html.escape(url)}</loc></url>" for url in sitemap_urls)
@@ -152,6 +194,10 @@ def main() -> None:
 
     print(f"Generated {generated} town pages in: {OUTPUT_DIR}")
     print(f"Town directory: {OUTPUT_DIR / 'index.html'}")
+    if homepage_updated:
+        print(f"Homepage Locations section updated with {len(valid_towns)} town links: {HOME_FILE}")
+    else:
+        print("Note: index.html not updated (file or LOCATIONS markers not found).")
     if not SITE_URL:
         print("Note: SITE_URL is not set, so canonical tags were omitted. Set SITE_URL when your live domain is ready.")
 
