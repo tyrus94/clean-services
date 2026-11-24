@@ -57,6 +57,6 @@ SITE_URL=https://www.yourdomain.co.ke python generate_pages.py   # adds canonica
 Each page picks its own intro, headings, meta text, FAQs and "local needs" cards from pools of variants (stable between runs). That reduces duplication, but the real fix is real local detail: fill in `town_profiles.json` per town (`type`: city, commuter, coastal, tourism, border or market; `areas`: neighbourhoods you genuinely serve; `note`: one true sentence about the town). Only fill what your team can verify.
 
 ### Testimonials
-Add real testimonials to `testimonials.csv` (columns: name, town, service, rating, date, text). Town pages show that town's testimonials first. The homepage shows a selection and `/testimonials/` lists all with a "Show more" button. With no rows the section is hidden. Only use testimonials from real customers with their permission; do not add review/rating schema markup for your own business reviews.
+`testimonials.csv` (columns: name, town, service, rating, date, text; comma- or tab-separated) feeds every page. A town page shows that town's testimonials first, then ones from nearby towns, so all 84 pages have a testimonials section. The homepage shows a selection and `/testimonials/` lists all of them with a "Show more" button. Only publish testimonials from real customers, and do not add star-rating schema markup for your own business reviews.
 
 **SEO quality note:** confirm operational coverage before indexing each page and avoid implying an office or presence that does not exist.
