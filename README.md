@@ -43,34 +43,20 @@ The four main website images are now regular HTML `<img>` elements in `index.htm
 
 ## Programmatic SEO town pages
 
-The PSEO setup includes:
-- `towns.csv` — 84 selected towns and their counties/regions.
-- `town-template.html` — shared HTML template for each location page.
-- `generate_pages.py` — generates one page per CSV row under `towns/<town-slug>/` and a town directory at `towns/index.html`. It also refreshes the **Locations** section on the homepage (`index.html`, between the `<!-- LOCATIONS:START -->` and `<!-- LOCATIONS:END -->` markers) with a link to every town, grouped by region. When `SITE_URL` is set, it also writes a root `sitemap.xml`.
+Files: `towns.csv` (towns), `town_profiles.json` (real local details per town), `testimonials.csv` (real client testimonials), `town-template.html`, `generate_pages.py`, `vercel.json`.
+
+Pages are generated at `/cleaning-services/<town>/` (directory at `/cleaning-services/`). `vercel.json` 301-redirects the old `/towns/...` URLs. Delete any old `towns` folder from the project.
 
 ### Generate pages
-
-Run from this project folder:
-
 ```bash
 python generate_pages.py
+SITE_URL=https://www.yourdomain.co.ke python generate_pages.py   # adds canonical tags + sitemap.xml
 ```
 
-Optional: add your live domain for canonical URLs (replace with your real domain):
+### Making each page different
+Each page picks its own intro, headings, meta text, FAQs and "local needs" cards from pools of variants (stable between runs). That reduces duplication, but the real fix is real local detail: fill in `town_profiles.json` per town (`type`: city, commuter, coastal, tourism, border or market; `areas`: neighbourhoods you genuinely serve; `note`: one true sentence about the town). Only fill what your team can verify.
 
-```bash
-SITE_URL=https://www.yourdomain.co.ke python generate_pages.py
-```
+### Testimonials
+Add real testimonials to `testimonials.csv` (columns: name, town, service, rating, date, text). Town pages show that town's testimonials first. The homepage shows a selection and `/testimonials/` lists all with a "Show more" button. With no rows the section is hidden. Only use testimonials from real customers with their permission; do not add review/rating schema markup for your own business reviews.
 
-On Windows PowerShell:
-
-```powershell
-$env:SITE_URL="https://www.yourdomain.co.ke"
-python generate_pages.py
-```
-
-Add or remove towns by editing `towns.csv` only, then re-run the script; the pages, the directory and the homepage Locations links all update together. Do not edit the block between the LOCATIONS markers by hand, as it is overwritten on each run.
-
-Upload the generated `towns` folder together with `index.html`, `styles.css` and `script.js` to the website root. The generated pages use root-relative asset paths so they can share the main site's CSS and JavaScript.
-
-**SEO quality note:** these are location-page foundations, not proof that cleaning teams are already available in every town. Confirm operational coverage and add genuinely local details, real photos/reviews, neighbourhoods served and town-specific FAQs before indexing each page. Avoid publishing pages that only swap the town name or imply an office/service presence that does not exist.
+**SEO quality note:** confirm operational coverage before indexing each page and avoid implying an office or presence that does not exist.

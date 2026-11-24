@@ -1,0 +1,7 @@
+{
+  "trailingSlash": true,
+  "redirects": [
+    { "source": "/towns", "destination": "/cleaning-services/", "permanent": true },
+    { "source": "/towns/:path*", "destination": "/cleaning-services/:path*", "permanent": true }
+  ]
+}

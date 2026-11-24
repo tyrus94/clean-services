@@ -1,0 +1,213 @@
+{
+ "_readme": "Optional per-town details used to make each page genuinely different. Fields: type (city, commuter, coastal, tourism, border, market - default market), areas (list of neighbourhoods you really can serve), note (one sentence of real local detail). Leave blank rather than guess - verify every entry with your team.",
+ "towns": {
+  "nairobi": {
+   "type": "city",
+   "areas": [
+    "Westlands",
+    "Kilimani",
+    "Lavington",
+    "Karen",
+    "South B",
+    "Kileleshwa",
+    "Parklands",
+    "Embakasi"
+   ]
+  },
+  "mombasa": {
+   "type": "city",
+   "areas": [
+    "Nyali",
+    "Bamburi",
+    "Tudor",
+    "Likoni",
+    "Kisauni",
+    "Shanzu",
+    "Old Town"
+   ]
+  },
+  "nakuru": {
+   "type": "city",
+   "areas": [
+    "Milimani",
+    "Section 58",
+    "Lanet",
+    "Pipeline",
+    "Free Area"
+   ]
+  },
+  "eldoret": {
+   "type": "city",
+   "areas": [
+    "Elgon View",
+    "Kapsoya",
+    "Pioneer",
+    "Kimumu",
+    "Langas"
+   ]
+  },
+  "kisumu": {
+   "type": "city",
+   "areas": [
+    "Milimani",
+    "Kondele",
+    "Nyalenda",
+    "Mamboleo",
+    "Kibuye"
+   ]
+  },
+  "ruiru": {
+   "type": "commuter",
+   "areas": [
+    "Membley",
+    "Kamakis",
+    "Mwihoko",
+    "Githurai 45"
+   ]
+  },
+  "kikuyu": {
+   "type": "commuter",
+   "areas": [
+    "Thogoto",
+    "Kinoo",
+    "Zambezi",
+    "Gikambura"
+   ]
+  },
+  "thika": {
+   "type": "commuter",
+   "areas": [
+    "Makongeni",
+    "Section 9",
+    "Landless",
+    "Ngoingwa"
+   ]
+  },
+  "karuri": {
+   "type": "commuter",
+   "areas": [
+    "Banana",
+    "Ndenderu"
+   ]
+  },
+  "ongata-rongai": {
+   "type": "commuter",
+   "areas": [
+    "Tuala",
+    "Nkoroi",
+    "Gataka",
+    "Kware"
+   ]
+  },
+  "juja": {
+   "type": "commuter",
+   "areas": [
+    "Kalimoni",
+    "Witeithie",
+    "Gachororo"
+   ]
+  },
+  "kitengela": {
+   "type": "commuter"
+  },
+  "kiambu": {
+   "type": "commuter"
+  },
+  "mlolongo": {
+   "type": "commuter",
+   "areas": [
+    "Syokimau",
+    "Katani"
+   ]
+  },
+  "ngong": {
+   "type": "commuter",
+   "areas": [
+    "Matasia",
+    "Kibiko",
+    "Embulbul"
+   ]
+  },
+  "limuru": {
+   "type": "commuter"
+  },
+  "athi-river": {
+   "type": "commuter"
+  },
+  "kiserian": {
+   "type": "commuter"
+  },
+  "githunguri": {
+   "type": "commuter"
+  },
+  "isinya": {
+   "type": "commuter"
+  },
+  "malindi": {
+   "type": "coastal",
+   "areas": [
+    "Casuarina",
+    "Shella",
+    "Barani"
+   ]
+  },
+  "mtwapa": {
+   "type": "coastal",
+   "areas": [
+    "Shanzu",
+    "Mtwapa Creek"
+   ]
+  },
+  "ukunda": {
+   "type": "coastal",
+   "areas": [
+    "Diani Beach",
+    "Galu Kinondo",
+    "Tiwi"
+   ]
+  },
+  "kilifi": {
+   "type": "coastal"
+  },
+  "watamu": {
+   "type": "coastal"
+  },
+  "naivasha": {
+   "type": "tourism"
+  },
+  "nanyuki": {
+   "type": "tourism"
+  },
+  "busia": {
+   "type": "border"
+  },
+  "taveta": {
+   "type": "border"
+  },
+  "nyeri": {
+   "areas": [
+    "Ruringu",
+    "Kamakwa"
+   ]
+  },
+  "meru": {
+   "areas": [
+    "Makutano",
+    "Milimani",
+    "Gakoromone"
+   ]
+  },
+  "kisii": {
+   "areas": [
+    "Daraja Mbili",
+    "Nyanchwa"
+   ]
+  },
+  "kakamega": {
+   "areas": [
+    "Lurambi",
+    "Milimani"
+   ]
+  }
+ }
+}
