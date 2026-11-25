@@ -453,7 +453,8 @@ def build_content(row, rows, profiles):
 
 
 def simple_page(title, description, body, extra=""):
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)}</title><meta name="description" content="{html.escape(description, quote=True)}"><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><a class="brand" href="/"><span class="brand-name">CLEANING SERVICES <b>KENYA</b></span></a><nav class="main-nav"><a href="/">Home</a><a href="/#services">Services</a><a href="/#contact">Contact</a></nav></header><main class="section">{body}</main><footer class="site-footer"><a href="/">Cleaning Services Kenya</a><small><a href="/privacy-policy/">Privacy Policy</a> · Made by Lumen Labs</small></footer>{extra}</body></html>"""
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)}</title><meta name="description" content="{html.escape(description, quote=True)}"><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><a class="brand" href="/"><span class="brand-name">CLEANING SERVICES <b>KENYA</b></span></a><nav class="main-nav"><a href="/">Home</a><a href="/#services">Services</a><a href="/#contact">Contact</a></nav></header><main class="section">{body}</main><footer class="site-footer"><a href="/">Cleaning Services Kenya</a><small><a href="/privacy-policy/">Privacy Policy</a> · Made by Lumen Labs</small></footer><a class="floating-whatsapp" href="https://wa.me/254706855633" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><span>◉</span><b>Chat with us</b></a>
+  <a class="floating-call" href="tel:+254706855633" aria-label="Call us"><span>☎</span><b>Call us</b></a>{extra}</body></html>"""
 
 
 def build_locations_html(town_rows):
