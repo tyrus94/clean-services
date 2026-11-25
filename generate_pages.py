@@ -31,6 +31,7 @@ import csv, hashlib, html, json, os, random, re
 
 from page_chrome import (
     HOME_DESCRIPTION,
+    OG_IMAGE,
     PHONE_DISPLAY,
     PHONE_TEL,
     SITE_URL,
@@ -38,6 +39,7 @@ from page_chrome import (
     breadcrumb_ld,
     breadcrumb_nav,
     json_ld_script,
+    organization_ref,
     render_page,
     seo_tags,
 )
@@ -228,7 +230,7 @@ HOME_CARD = [
 ]
 BUSINESS_CARD = [
     "Discuss office, workplace and commercial cleaning requirements in {town} with our team.",
-    "Shops, offices and other commercial premises in {town}: tell us the size, opening hours and the routine you need.",
+    "Shops, offices and other commercial premises in {town}: tell us the size, when the workplace can be cleaned, and the routine you need.",
     "Looking after a workplace in {town}? Share what you need and we’ll discuss a suitable schedule.",
 ]
 ABOUT_TEXT = [
@@ -565,35 +567,30 @@ def update_homepage(town_rows, testimonials):
 
 
 def home_schema(town_rows):
-    areas = [
-        {
-            "@type": "City",
-            "name": row["town"],
-            "containedInPlace": {
-                "@type": "AdministrativeArea",
-                "name": f"{row['county']} County, Kenya",
-            },
-        }
-        for row in town_rows
-    ]
-    return {
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        "@id": f"{SITE_URL}/#organization",
-        "name": "Cleaning Services Kenya",
-        "url": f"{SITE_URL}/",
-        "telephone": PHONE_TEL,
-        "image": "https://raw.githubusercontent.com/zoneislaced/clean-services-kenya/refs/heads/main/Assets/pexels-ron-lach-10568269.jpg",
+    node = {"@context": "https://schema.org", **organization_ref()}
+    node.update({
+        "image": OG_IMAGE,
         "description": HOME_DESCRIPTION,
-        "areaServed": areas,
-    }
+        "areaServed": [
+            {
+                "@type": "City",
+                "name": row["town"],
+                "containedInPlace": {
+                    "@type": "AdministrativeArea",
+                    "name": f"{row['county']} County, Kenya",
+                },
+            }
+            for row in town_rows
+        ],
+    })
+    return node
 
 
 def upsert_home_schema(page, town_rows):
-    # TODO(owner): street address, geo, openingHours, priceRange, logo and sameAs are omitted on purpose.
     block = (
-        "<!-- TODO(owner): LocalBusiness has no streetAddress, addressLocality, postalCode, "
-        "geo, openingHours, priceRange, logo or sameAs. Add only facts the owner confirms. "
+        "<!-- Service-area business. Cleaning is at the customer's property. "
+        "Contact is phone and WhatsApp only. Do not add address, geo, or openingHours. -->\n  "
+        "<!-- TODO(owner): priceRange, a logo file, and sameAs profiles stay out until confirmed. "
         "Do not add aggregateRating or review markup. -->\n  "
         + json_ld_script(home_schema(town_rows))
     )
@@ -710,13 +707,7 @@ def main():
             "url": f"{SITE_URL}{path}",
             "areaServed": {"@type": "City", "name": town,
                            "containedInPlace": {"@type": "AdministrativeArea", "name": f"{county} County, Kenya"}},
-            "provider": {
-                "@type": "LocalBusiness",
-                "@id": f"{SITE_URL}/#organization",
-                "name": "Cleaning Services Kenya",
-                "url": f"{SITE_URL}/",
-                "telephone": PHONE_TEL,
-            },
+            "provider": organization_ref(),
             "description": c["description"],
         }
         options = build_town_options(valid_towns, current_town=town)

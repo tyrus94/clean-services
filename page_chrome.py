@@ -1,8 +1,9 @@
 """Shared head, header and footer for generated pages.
 
-Facts used here are already on the site: the business name, the phone
-number and the production host. Address, opening hours, prices and
-social profiles are intentionally absent.
+Cleaning Services Kenya is a service-area business. Work is done at the
+customer's property. The only contact details on the site are the phone
+number and its WhatsApp link. Do not add a street address, geo
+coordinates, or opening hours.
 """
 import html
 import json
@@ -32,6 +33,28 @@ SERVICE_LINKS = [
     ("sofa-cleaning", "Sofa & upholstery"),
     ("parapet-cleaning", "Parapet cleaning"),
 ]
+
+def organization_ref():
+    """Stable identity for the service-area business.
+
+    Schema.org has no ServiceAreaBusiness type. ProfessionalService is the
+    LocalBusiness subtype, published with areaServed and without address,
+    geo, or openingHours.
+    """
+    return {
+        "@type": "ProfessionalService",
+        "@id": f"{SITE_URL}/#organization",
+        "name": "Cleaning Services Kenya",
+        "url": f"{SITE_URL}/",
+        "telephone": PHONE_TEL,
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": PHONE_TEL,
+            "contactType": "customer service",
+            "url": f"https://wa.me/{WHATSAPP_NUMBER}",
+        },
+    }
+
 
 FORM_SERVICES = [
     "Residential cleaning",

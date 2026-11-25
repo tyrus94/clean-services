@@ -20,6 +20,7 @@ from page_chrome import (
     WHATSAPP_NUMBER,
     breadcrumb_ld,
     breadcrumb_nav,
+    organization_ref,
     render_page,
     service_options,
 )
@@ -101,7 +102,7 @@ def _town_chips():
     return (
         '<div class="areas-block"><h3>Town pages</h3>'
         f'<ul class="area-chips area-links">{items}</ul>'
-        '<p class="areas-note">Choose a town to enquire locally. Availability is confirmed for your address.</p></div>'
+        '<p class="areas-note">Choose a town to enquire. The clean happens at the property, and availability is confirmed before anything is booked.</p></div>'
     )
 
 
@@ -171,7 +172,7 @@ def _hero(page, wa_url):
     <section class="trust-strip" aria-label="How enquiries work">
       <div><span>01</span><strong>Phone or WhatsApp</strong></div>
       <div><span>02</span><strong>Quote for your space</strong></div>
-      <div><span>03</span><strong>Address confirmed</strong></div>
+      <div><span>03</span><strong>We come to you</strong></div>
       <div><span>04</span><strong>Nairobi and beyond</strong></div>
     </section>"""
 
@@ -204,13 +205,7 @@ def _service_ld(page):
         "description": page["description"],
         "areaServed": [{"@type": "Country", "name": "Kenya"}]
         + [{"@type": "City", "name": name} for _, name in TOWN_LINKS],
-        "provider": {
-            "@type": "LocalBusiness",
-            "@id": f"{SITE_URL}/#organization",
-            "name": "Cleaning Services Kenya",
-            "url": f"{SITE_URL}/",
-            "telephone": PHONE_TEL,
-        },
+        "provider": organization_ref(),
     }
 
 
@@ -296,7 +291,7 @@ PAGES = [
                     ("Cockroach fumigation", "Kitchens, drains and shop stores. Tell us how widespread it is and whether the space is a home or a food business."),
                     ("Bed bug fumigation", "Bedrooms, guest rooms and lodgings. Say how many rooms are affected and whether furniture can be moved."),
                     ("Before a move-in", "A treatment ahead of unpacking, often alongside a move-in clean. Share the key date."),
-                    ("Workplaces", "Offices, shops and restaurants. Share opening hours so the visit can sit around customers and staff."),
+                    ("Workplaces", "Offices, shops and restaurants. Tell us when the workplace can be treated, around customers and staff."),
                 ],
             },
             {

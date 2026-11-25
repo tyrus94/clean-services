@@ -56,7 +56,7 @@ Canonical URLs, Open Graph tags, `sitemap.xml` and `robots.txt` use `https://www
 
 `vercel.json` sets `trailingSlash: true`, so `/fumigation` redirects to `/fumigation/`. Paths with a file extension, including `/sitemap.xml` and `/robots.txt`, are left as they are.
 
-Do not invent an address, opening hours, prices or review stars. HTML comments marked `TODO(owner)` are the facts still needed from the business.
+This is a service-area business: cleaning happens at the customer's property, and the only contact details are the phone number and WhatsApp. Do not add a street address, geo coordinates, or opening hours. Do not invent prices or review stars. HTML comments marked `TODO(owner)` are the remaining facts (prices, a logo, and social profiles).
 
 ### Making each page different
 Each page picks its own intro, headings, meta text, FAQs and "local needs" cards from pools of variants (stable between runs). That reduces duplication, but the real fix is real local detail: fill in `town_profiles.json` per town (`type`: city, commuter, coastal, tourism, border or market; `areas`: neighbourhoods you genuinely serve; `note`: one true sentence about the town). Only fill what your team can verify.
