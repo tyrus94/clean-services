@@ -4,7 +4,8 @@
 Run from the project folder:
     python generate_pages.py
 
-Optional canonical domain:
+Canonical host defaults to https://www.cleaningserviceskenya.co.ke.
+Override it with SITE_URL if you need another host:
     SITE_URL=https://www.example.co.ke python generate_pages.py
 
 Inputs:
@@ -17,12 +18,32 @@ Output:
     cleaning-services/<town-slug>/index.html
     cleaning-services/index.html
     testimonials/index.html   (only when testimonials.csv has rows)
-    index.html                (Locations + Testimonials blocks between the markers are refreshed)
-    sitemap.xml               (when SITE_URL is set)
+    index.html                (Locations + Testimonials blocks between the markers are refreshed,
+                               plus the homepage LocalBusiness JSON-LD between SCHEMA markers)
+    sitemap.xml
+    robots.txt
+    fumigation/, carpet-cleaning/, sofa-cleaning/, parapet-cleaning/,
+    house-cleaning/, office-cleaning/
 """
 from pathlib import Path
 from urllib.parse import quote
 import csv, hashlib, html, json, os, random, re
+
+from page_chrome import (
+    HOME_DESCRIPTION,
+    OG_IMAGE,
+    PHONE_DISPLAY,
+    PHONE_TEL,
+    SITE_URL,
+    WHATSAPP_NUMBER,
+    breadcrumb_ld,
+    breadcrumb_nav,
+    json_ld_script,
+    organization_ref,
+    render_page,
+    seo_tags,
+)
+from service_pages import service_paths, write_service_pages
 
 BASE_DIR = Path(__file__).resolve().parent
 CSV_FILE = BASE_DIR / "towns.csv"
@@ -32,11 +53,8 @@ TESTIMONIALS_FILE = BASE_DIR / "testimonials.csv"
 URL_PREFIX = "cleaning-services"          # town pages live at /cleaning-services/<town>/
 OUTPUT_DIR = BASE_DIR / URL_PREFIX
 TESTIMONIALS_DIR = BASE_DIR / "testimonials"
-SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
-PHONE_DISPLAY = "+254 706 855633"
-PHONE_TEL = "+254706855633"
-WHATSAPP_NUMBER = "254706855633"
 HOME_FILE = BASE_DIR / "index.html"
+SCHEMA_START, SCHEMA_END = "<!-- SCHEMA:START -->", "<!-- SCHEMA:END -->"
 LOC_START, LOC_END = "<!-- LOCATIONS:START -->", "<!-- LOCATIONS:END -->"
 TST_START, TST_END = "<!-- TESTIMONIALS:START -->", "<!-- TESTIMONIALS:END -->"
 BOOKING_ANCHOR = '<section class="section booking-section" id="contact">'
@@ -178,23 +196,26 @@ FAQS = [
     ("Can I choose the day and time?", "Share your preferred date in the form. We'll confirm what's possible for {town} when we reply."),
 ]
 
-H1_VARIANTS = [
-    "Professional cleaning in <em>{town}</em>.",
-    "Cleaning services in <em>{town}</em>, {county} County.",
-    "A cleaner space in <em>{town}</em>.",
-    "Home and business cleaning in <em>{town}</em>.",
-]
+# Titles stay accurate for a general town page (house and office cleaning),
+# and they differ by more than the town name. Nairobi keeps the exact
+# high-volume phrasing "Cleaning services in Nairobi".
 TITLE_VARIANTS = [
-    "Cleaning Services in {town}, {county} County | Cleaning Services Kenya",
-    "{town} Home & Office Cleaning | Cleaning Services Kenya",
-    "Cleaners in {town}: Request a Quote | Cleaning Services Kenya",
-    "House & Commercial Cleaning in {town} | Cleaning Services Kenya",
+    "Cleaning Services in {town} | {county} County",
+    "Cleaning Services in {town}, Kenya",
+    "{town} Cleaning Services | House & Office",
+    "House & Office Cleaning in {town}",
+    "Professional Cleaning Services in {town}",
+    "Home & Business Cleaning in {town}",
+    "{town} Cleaners | {county} County, Kenya",
+    "Cleaning Services in {town} | Homes & Workplaces",
 ]
-META_VARIANTS = [
-    "Need cleaning in {town}, {county} County? Request a quote from Cleaning Services Kenya for home or office cleaning and confirm availability.",
-    "Home and business cleaning enquiries for {town}. Tell Cleaning Services Kenya what you need and we'll confirm availability in {county} County.",
-    "Cleaning Services Kenya takes enquiries for residential, commercial and deep cleaning in {town}. Request a quote by WhatsApp or phone.",
-    "Looking for a cleaner in {town}? Send your details to Cleaning Services Kenya for a quote on home, office or move-out cleaning.",
+META_ANGLES = [
+    "house cleaning, office cleaning and deep cleans",
+    "residential and commercial cleaning",
+    "home, workplace and move-out cleaning",
+    "regular home cleaning and one-off deep cleans",
+    "office cleaning, house cleaning and fumigation enquiries",
+    "carpet, sofa and everyday home cleaning",
 ]
 SERVICES_INTRO = [
     "From homes and apartments to offices and commercial premises, tell us what needs cleaning in {town} and we’ll help you discuss the right service.",
@@ -209,7 +230,7 @@ HOME_CARD = [
 ]
 BUSINESS_CARD = [
     "Discuss office, workplace and commercial cleaning requirements in {town} with our team.",
-    "Shops, offices and other commercial premises in {town}: tell us the size, opening hours and the routine you need.",
+    "Shops, offices and other commercial premises in {town}: tell us the size, when the workplace can be cleaned, and the routine you need.",
     "Looking after a workplace in {town}? Share what you need and we’ll discuss a suitable schedule.",
 ]
 ABOUT_TEXT = [
@@ -324,7 +345,7 @@ def testimonial_card(t, hidden=False):
     meta = t["town"]  # date intentionally not shown
     return (
         f'<article class="testimonial-card"{" hidden" if hidden else ""}>'
-        f'<div class="t-top"><span class="t-stars" aria-label="{t["rating"]} out of 5 stars">{"★" * t["rating"]}</span>'
+        f'<div class="t-top"><span class="t-stars" role="img" aria-label="{t["rating"]} out of 5 stars">{"★" * t["rating"]}</span>'
         f'<span class="t-service">{html.escape(t["service"])}</span></div>'
         f'<p class="t-text">“{html.escape(t["text"])}”</p>'
         f'<div class="t-meta"><strong>{html.escape(t["name"])}</strong><span>{html.escape(meta)}</span></div></article>'
@@ -367,6 +388,35 @@ def build_testimonials_section(testimonials, row=None, rows=None, slug="home"):
 
 
 # ---------------------------------------------------------------- page building
+def build_title(slug, ctx):
+    if slug == "nairobi":
+        return "Cleaning Services in Nairobi | House & Office"
+    return pick(slug, "title-v2", TITLE_VARIANTS).format(**ctx)
+
+
+def build_description(slug, ctx, profile):
+    angle = pick(slug, "meta-angle", META_ANGLES)
+    areas = [area for area in (profile.get("areas") or []) if area]
+    if areas:
+        place = "Areas include " + join_names(areas[:3]) + "."
+    else:
+        place = "Nearby towns include " + ctx["nearby"] + "."
+    description = (
+        f"Cleaning services in {ctx['town']}, {ctx['county']} County: {angle}. "
+        f"{place} WhatsApp +254 706 855633."
+    )
+    if len(description) > 170:
+        if areas:
+            place = "Areas include " + areas[0] + "."
+        else:
+            place = "Nearby: " + ctx["nearby"].split(" and ")[0] + "."
+        description = (
+            f"Cleaning services in {ctx['town']}, {ctx['county']} County: {angle}. "
+            f"{place} WhatsApp +254 706 855633."
+        )
+    return description
+
+
 def build_content(row, rows, profiles):
     slug, town, county, region = row["slug"], row["town"], row["county"], row["region"]
     profile = profiles.get(slug, {})
@@ -436,12 +486,12 @@ def build_content(row, rows, profiles):
     }
     faq_schema_tag = '<script type="application/ld+json">' + json.dumps(faq_schema, ensure_ascii=False).replace("</", "<\\/") + "</script>"
 
-    title = pick(slug, "title", TITLE_VARIANTS).format(**ctx)
-    description = pick(slug, "meta", META_VARIANTS).format(**ctx)
+    title = build_title(slug, ctx)
+    description = build_description(slug, ctx, profile)
 
     return {
         "ctx": ctx, "title": title, "description": description,
-        "h1_html": pick(slug, "h1", H1_VARIANTS).format(town=html.escape(town), county=html.escape(county)),
+        "h1_html": f"Cleaning services<br><em>in {html.escape(town)}.</em>",
         "hero_description": fmt(pick(slug, "intro", INTROS[ttype]), ctx),
         "services_intro": fmt(pick(slug, "si", SERVICES_INTRO), ctx),
         "home_card_text": fmt(pick(slug, "hc", HOME_CARD), ctx),
@@ -452,9 +502,11 @@ def build_content(row, rows, profiles):
     }
 
 
-def simple_page(title, description, body, extra=""):
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)}</title><meta name="description" content="{html.escape(description, quote=True)}"><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><a class="brand" href="/"><span class="brand-name">CLEANING SERVICES <b>KENYA</b></span></a><nav class="main-nav"><a href="/">Home</a><a href="/#services">Services</a><a href="/#contact">Contact</a></nav></header><main class="section">{body}</main><footer class="site-footer"><a href="/">Cleaning Services Kenya</a><small><a href="/privacy-policy/">Privacy Policy</a> · Made by Lumen Labs</small></footer><a class="floating-whatsapp" href="https://wa.me/254706855633" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><span>◉</span><b>Chat with us</b></a>
-  <a class="floating-call" href="tel:+254706855633" aria-label="Call us"><span>☎</span><b>Call us</b></a>{extra}</body></html>"""
+def simple_page(title, description, path, body, extra="", crumbs=None):
+    crumb_html = breadcrumb_nav(crumbs) if crumbs else ""
+    main = f'<main class="section">{crumb_html}{body}</main>'
+    blocks = [breadcrumb_ld(crumbs)] if crumbs else []
+    return render_page(title, description, path, main, extra_ld=blocks, extra_body=extra)
 
 
 def build_locations_html(town_rows):
@@ -507,8 +559,46 @@ def update_homepage(town_rows, testimonials):
             page = page.replace(BOOKING_ANCHOR, f"{TST_START}\n{TST_END}\n    {BOOKING_ANCHOR}", 1)
     pat = re.compile(re.escape(TST_START) + r".*?" + re.escape(TST_END), re.S)
     page = pat.sub(lambda m: f"{TST_START}\n{build_testimonials_section(testimonials)}\n    {TST_END}", page, count=1)
+    if "<html lang=\"en\">" in page:
+        page = page.replace("<html lang=\"en\">", "<html lang=\"en-KE\">", 1)
+    page = upsert_home_schema(page, town_rows)
     HOME_FILE.write_text(page, encoding="utf-8")
     return True, True
+
+
+def home_schema(town_rows):
+    node = {"@context": "https://schema.org", **organization_ref()}
+    node.update({
+        "image": OG_IMAGE,
+        "description": HOME_DESCRIPTION,
+        "areaServed": [
+            {
+                "@type": "City",
+                "name": row["town"],
+                "containedInPlace": {
+                    "@type": "AdministrativeArea",
+                    "name": f"{row['county']} County, Kenya",
+                },
+            }
+            for row in town_rows
+        ],
+    })
+    return node
+
+
+def upsert_home_schema(page, town_rows):
+    block = (
+        "<!-- Service-area business. Cleaning is at the customer's property. "
+        "Contact is phone and WhatsApp only. Do not add address, geo, or openingHours. -->\n  "
+        "<!-- TODO(owner): priceRange, a logo file, and sameAs profiles stay out until confirmed. "
+        "Do not add aggregateRating or review markup. -->\n  "
+        + json_ld_script(home_schema(town_rows))
+    )
+    wrapped = f"{SCHEMA_START}\n  {block}\n  {SCHEMA_END}"
+    pattern = re.compile(re.escape(SCHEMA_START) + r".*?" + re.escape(SCHEMA_END), re.S)
+    if pattern.search(page):
+        return pattern.sub(lambda _match: wrapped, page, count=1)
+    return page.replace("</head>", f"  {wrapped}\n</head>", 1)
 
 
 def write_testimonials_page(testimonials):
@@ -539,8 +629,14 @@ if(document.querySelectorAll('#all-testimonials [hidden]').length===0)b.style.di
 b.addEventListener('click',more);more();})();
 </script>"""
     TESTIMONIALS_DIR.mkdir(exist_ok=True)
-    page = simple_page("Client Testimonials | Cleaning Services Kenya",
-                       "Read what clients say about Cleaning Services Kenya.", body, script)
+    page = simple_page(
+        "Client Testimonials | Cleaning Services Kenya",
+        "Testimonials from Cleaning Services Kenya clients across Kenya. Read the feedback, then call or WhatsApp +254 706 855633.",
+        "/testimonials/",
+        body,
+        script,
+        [("Home", "/"), ("Testimonials", "/testimonials/")],
+    )
     (TESTIMONIALS_DIR / "index.html").write_text(page, encoding="utf-8")
     return True
 
@@ -573,8 +669,13 @@ def write_privacy_page():
 <p>Our services and website are not directed at children under 18, and we do not knowingly collect their personal information.</p>
 <h2>Changes to this policy</h2>
 <p>We may update this policy from time to time. The latest version will always be on this page, with the date above.</p></div>"""
-    page = simple_page("Privacy Policy | Cleaning Services Kenya",
-                       "How Cleaning Services Kenya collects, uses and protects your personal information.", body)
+    page = simple_page(
+        "Privacy Policy | Cleaning Services Kenya",
+        "How Cleaning Services Kenya collects, uses and protects your personal information.",
+        "/privacy-policy/",
+        body,
+        crumbs=[("Home", "/"), ("Privacy Policy", "/privacy-policy/")],
+    )
     (BASE_DIR / "privacy-policy").mkdir(exist_ok=True)
     (BASE_DIR / "privacy-policy" / "index.html").write_text(page, encoding="utf-8")
 
@@ -596,18 +697,19 @@ def main():
         town, county, region, slug = row["town"], row["county"], row["region"], row["slug"]
         c = build_content(row, valid_towns, profiles)
         whatsapp_text = quote(f"Hello Cleaning Services Kenya, I would like to enquire about cleaning services in {town}, {county} County.")
-        canonical_tag = f'<link rel="canonical" href="{SITE_URL}/{URL_PREFIX}/{slug}/">' if SITE_URL else ""
+        path = f"/{URL_PREFIX}/{slug}/"
+        crumbs = [("Home", "/"), ("Locations", f"/{URL_PREFIX}/"), (town, path)]
         schema = {
-            "@context": "https://schema.org", "@type": "Service",
+            "@context": "https://schema.org",
+            "@type": "Service",
             "name": f"Cleaning services in {town}",
-            "serviceType": ["Residential cleaning", "Commercial cleaning", "Deep cleaning"],
+            "serviceType": ["Residential cleaning", "Commercial cleaning", "Deep cleaning", "House cleaning", "Office cleaning"],
+            "url": f"{SITE_URL}{path}",
             "areaServed": {"@type": "City", "name": town,
                            "containedInPlace": {"@type": "AdministrativeArea", "name": f"{county} County, Kenya"}},
-            "provider": {"@type": "Organization", "name": "Cleaning Services Kenya"},
+            "provider": organization_ref(),
             "description": c["description"],
         }
-        if SITE_URL:
-            schema["provider"]["url"] = SITE_URL
         options = build_town_options(valid_towns, current_town=town)
         values = {
             "town": html.escape(town), "town_upper": html.escape(town.upper()),
@@ -615,7 +717,9 @@ def main():
             "region": html.escape(region),
             "page_title": html.escape(c["title"]),
             "meta_description": html.escape(c["description"], quote=True),
-            "canonical_tag": canonical_tag,
+            "seo_tags": seo_tags(path, c["title"], c["description"]),
+            "breadcrumb_nav": breadcrumb_nav(crumbs),
+            "breadcrumb_json": json.dumps(breadcrumb_ld(crumbs), ensure_ascii=False).replace("</", "<\\/"),
             "schema_json": json.dumps(schema, ensure_ascii=False).replace("</", "<\\/"),
             "whatsapp_text": whatsapp_text,
             "phone_display": html.escape(PHONE_DISPLAY), "phone_tel": PHONE_TEL,
@@ -643,37 +747,76 @@ def main():
         f'<li><a href="/{URL_PREFIX}/{html.escape(slug)}/">Cleaning services in {html.escape(town)}</a> <span>— {html.escape(county)} County</span></li>'
         for town, county, slug in index_cards
     )
-    body = (f'<p class="eyebrow">OUR LOCATIONS</p><h1>Cleaning service locations across Kenya</h1>'
-            f'<p>Choose a town to enquire about residential or commercial cleaning. Service availability is confirmed individually.</p>'
-            f'<ul class="town-directory">{links}</ul>')
+    service_chips = "".join(
+        f'<li><a href="/{slug}/">{html.escape(label)}</a></li>'
+        for slug, label in __import__("page_chrome").SERVICE_LINKS
+    )
+    body = (
+        '<p class="eyebrow">OUR LOCATIONS</p><h1>Cleaning service locations across Kenya</h1>'
+        '<p>Choose a town to enquire about residential or commercial cleaning. Service availability is confirmed individually.</p>'
+        '<div class="areas-block"><h2>Services</h2>'
+        f'<ul class="area-chips area-links">{service_chips}</ul></div>'
+        f'<ul class="town-directory">{links}</ul>'
+    )
     (OUTPUT_DIR / "index.html").write_text(
-        simple_page("Cleaning Service Locations in Kenya | Cleaning Services Kenya",
-                    "Browse our cleaning service enquiry pages for towns across Kenya.", body),
-        encoding="utf-8")
+        simple_page(
+            "Cleaning Service Locations in Kenya | Cleaning Services Kenya",
+            "Cleaning service locations across Kenya. Choose a town to enquire about house cleaning, office cleaning, fumigation and more.",
+            f"/{URL_PREFIX}/",
+            body,
+            crumbs=[("Home", "/"), ("Locations", f"/{URL_PREFIX}/")],
+        ),
+        encoding="utf-8",
+    )
+
+    seen_titles, seen_meta = {}, {}
+    for town, county, slug in index_cards:
+        page_html = (OUTPUT_DIR / slug / "index.html").read_text(encoding="utf-8")
+        title = re.search(r"<title>(.*?)</title>", page_html).group(1)
+        meta = re.search(r'<meta name="description" content="(.*?)">', page_html).group(1)
+        if title in seen_titles:
+            raise SystemExit(f"Duplicate title for {slug} and {seen_titles[title]}: {title}")
+        if meta in seen_meta:
+            raise SystemExit(f"Duplicate meta description for {slug} and {seen_meta[meta]}")
+        seen_titles[title] = slug
+        seen_meta[meta] = slug
 
     loc_ok, tst_ok = update_homepage(valid_towns, testimonials)
     has_tst_page = write_testimonials_page(testimonials)
     write_privacy_page()
+    service_count = write_service_pages(BASE_DIR)
 
-    if SITE_URL:
-        urls = [f"{SITE_URL}/", f"{SITE_URL}/{URL_PREFIX}/"] + [f"{SITE_URL}/{URL_PREFIX}/{s}/" for _, _, s in index_cards]
-        urls.append(f"{SITE_URL}/privacy-policy/")
-        if has_tst_page:
-            urls.append(f"{SITE_URL}/testimonials/")
-        body = "\n".join(f"  <url><loc>{html.escape(u)}</loc></url>" for u in urls)
-        (BASE_DIR / "sitemap.xml").write_text(
-            f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{body}\n</urlset>\n',
-            encoding="utf-8")
+    urls = [f"{SITE_URL}/"]
+    urls.extend(f"{SITE_URL}{path}" for path in service_paths())
+    urls.append(f"{SITE_URL}/{URL_PREFIX}/")
+    urls.extend(f"{SITE_URL}/{URL_PREFIX}/{slug}/" for _, _, slug in index_cards)
+    if has_tst_page:
+        urls.append(f"{SITE_URL}/testimonials/")
+    urls.append(f"{SITE_URL}/privacy-policy/")
+    body = "\n".join(f"  <url><loc>{html.escape(url)}</loc></url>" for url in urls)
+    (BASE_DIR / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{body}\n</urlset>\n",
+        encoding="utf-8",
+    )
+    (BASE_DIR / "robots.txt").write_text(
+        "User-agent: *\n"
+        "Allow: /\n"
+        "\n"
+        f"Sitemap: {SITE_URL}/sitemap.xml\n",
+        encoding="utf-8",
+    )
 
     print(f"Generated {len(index_cards)} town pages in: {OUTPUT_DIR}")
+    print(f"Generated {service_count} service pages.")
     detailed = sum(1 for r in valid_towns if profiles.get(r["slug"], {}).get("areas"))
     print(f"Towns with neighbourhood details: {detailed}/{len(valid_towns)} (fill in town_profiles.json for the rest)")
     print(f"Testimonials loaded: {len(testimonials)}" + ("" if testimonials else " (section hidden until testimonials.csv has real rows)"))
     print("Homepage locations and testimonials updated." if loc_ok else "Note: homepage not updated.")
     if (BASE_DIR / "towns").exists():
         print("Note: an old 'towns' folder still exists. Delete it; vercel.json redirects /towns/* to /cleaning-services/*.")
-    if not SITE_URL:
-        print("Note: SITE_URL is not set, so canonical tags and sitemap.xml were omitted.")
+    print(f"Canonical host: {SITE_URL}")
 
 
 if __name__ == "__main__":

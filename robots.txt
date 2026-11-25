@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.cleaningserviceskenya.co.ke/sitemap.xml

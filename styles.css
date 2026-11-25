@@ -5,6 +5,38 @@
 
 .footer-credit{margin-left:12px;padding-left:12px;border-left:1px solid #c9bda9}.footer-credit a{color:var(--sage);font-weight:700}
 
+.footer-links{flex-wrap:wrap;row-gap:8px}
+@media(min-width:761px){.site-header{height:auto;min-height:86px}}
+.hero-slogan{font:500 clamp(26px,3vw,40px)/1.2 var(--serif);letter-spacing:-.03em;margin:18px 0 0;color:var(--ink)}
+.hero-slogan em{color:var(--sage);font-style:italic}
+.hero-copy .hero-slogan + .hero-description{margin-top:18px}
+.breadcrumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 18px;color:var(--muted);font-size:11px;font-weight:600}
+.breadcrumb a{color:var(--sage);font-weight:700}
+.service-list a{color:inherit}
+.service-list a:hover{color:var(--sage)}
+.nav-services{position:relative}
+.nav-services>summary{list-style:none;cursor:pointer}
+.nav-services>summary::-webkit-details-marker{display:none}
+.nav-services>summary::after{content:"▾";font-size:8px;margin-left:6px}
+.nav-services[open]>summary,.nav-services>summary:hover{color:var(--champagne)}
+.nav-services-menu{position:absolute;top:calc(100% + 18px);left:50%;transform:translateX(-50%);background:#fffdf9;border:1px solid var(--sand);min-width:230px;padding:8px 0;z-index:5;box-shadow:0 16px 40px rgba(41,43,39,.08)}
+.nav-services-menu a{display:block;padding:9px 16px;font-size:12px;font-weight:600;white-space:nowrap}
+.nav-services-menu a:hover{background:#f4f1e8;color:var(--sage)}
+.copy{max-width:760px}
+.copy p,.copy li{font-size:15px;line-height:1.8;color:#4e5148}
+.copy p{margin:0 0 16px}
+.copy ul{margin:0 0 16px;padding-left:18px}
+.copy li{margin:6px 0}
+.copy a{color:var(--sage);font-weight:700;border-bottom:1px solid var(--sand)}
+.copy + .need-grid,.copy + .areas-block{margin-top:8px}
+.section .areas-block{margin-top:28px}
+.areas-block h2{font:500 20px/1.3 var(--serif);letter-spacing:0;margin:0 0 14px}
+@media(max-width:760px){
+  .nav-services-menu{position:static;transform:none;border:0;box-shadow:none;background:transparent;padding:4px 0 0;min-width:0}
+  .nav-services-menu a{padding:8px 0}
+  .site-footer{padding-bottom:120px}
+}
+
 .town-directory{columns:2;column-gap:50px;padding-left:20px;margin-top:35px}.town-directory li{break-inside:avoid;padding:10px 0;border-bottom:1px solid var(--sand);font-size:13px}.town-directory a{color:var(--sage);font-weight:700}.town-directory span{color:var(--muted);font-size:11px}@media(max-width:600px){.town-directory{columns:1}}
 /* Testimonials section */
 .testimonials-section{background:var(--white);border-top:1px solid var(--sand);border-bottom:1px solid var(--sand)}
