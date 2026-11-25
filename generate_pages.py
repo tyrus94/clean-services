@@ -321,7 +321,7 @@ def stars(n):
 
 
 def testimonial_card(t, hidden=False):
-    meta = t["town"]
+    meta = t["town"]  # date intentionally not shown
     return (
         f'<article class="testimonial-card"{" hidden" if hidden else ""}>'
         f'<div class="t-top"><span class="t-stars" aria-label="{t["rating"]} out of 5 stars">{"★" * t["rating"]}</span>'
@@ -453,7 +453,7 @@ def build_content(row, rows, profiles):
 
 
 def simple_page(title, description, body, extra=""):
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)}</title><meta name="description" content="{html.escape(description, quote=True)}"><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><a class="brand" href="/"><span class="brand-name">CLEANING SERVICES <b>KENYA</b></span></a><nav class="main-nav"><a href="/">Home</a><a href="/#services">Services</a><a href="/#contact">Contact</a></nav></header><main class="section">{body}</main><footer class="site-footer"><a href="/">Cleaning Services Kenya</a><small>Made by Lumen Labs</small></footer>{extra}</body></html>"""
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)}</title><meta name="description" content="{html.escape(description, quote=True)}"><link rel="stylesheet" href="/styles.css"></head><body><header class="site-header"><a class="brand" href="/"><span class="brand-name">CLEANING SERVICES <b>KENYA</b></span></a><nav class="main-nav"><a href="/">Home</a><a href="/#services">Services</a><a href="/#contact">Contact</a></nav></header><main class="section">{body}</main><footer class="site-footer"><a href="/">Cleaning Services Kenya</a><small><a href="/privacy-policy/">Privacy Policy</a> · Made by Lumen Labs</small></footer>{extra}</body></html>"""
 
 
 def build_locations_html(town_rows):
@@ -516,11 +516,19 @@ def write_testimonials_page(testimonials):
             (TESTIMONIALS_DIR / "index.html").unlink(missing_ok=True)
         return False
     cards = "\n".join(testimonial_card(t, hidden=i >= 24) for i, t in enumerate(testimonials))
+    contact_buttons = (
+        '<div class="hero-actions" style="margin:28px 0;justify-content:center">'
+        f'<a class="button" href="tel:{PHONE_TEL}">Call us <span>↗</span></a>'
+        f'<a class="button" href="https://wa.me/{WHATSAPP_NUMBER}" target="_blank" rel="noopener">Chat with us <span>↗</span></a>'
+        '</div>'
+    )
     body = (
         '<p class="eyebrow">CLIENT TESTIMONIALS</p><h1>What our clients say</h1>'
         f'<p>{len(testimonials)} testimonials from clients across Kenya.</p>'
+        f'{contact_buttons}'
         f'<div class="testimonials-grid" id="all-testimonials">{cards}</div>'
         '<p class="testimonial-more"><button class="button" id="show-more" type="button">Show more</button></p>'
+        f'{contact_buttons}'
     )
     script = """<script>
 (function(){var b=document.getElementById('show-more');if(!b)return;
@@ -534,6 +542,40 @@ b.addEventListener('click',more);more();})();
                        "Read what clients say about Cleaning Services Kenya.", body, script)
     (TESTIMONIALS_DIR / "index.html").write_text(page, encoding="utf-8")
     return True
+
+
+def write_privacy_page():
+    body = """<div class="legal"><p class="eyebrow">LEGAL</p><h1>Privacy Policy</h1>
+<p><em>Last updated: November 2026</em></p>
+<p>This policy explains how Cleaning Services Kenya (“we”, “us”) collects and uses personal information when you visit this website or contact us about residential or commercial cleaning services in Kenya.</p>
+<h2>Who we are and how to contact us</h2>
+<p>Cleaning Services Kenya provides home and business cleaning. You can reach us by phone on <a href="tel:+254706855633">+254 706 855633</a> or on <a href="https://wa.me/254706855633" target="_blank" rel="noopener">WhatsApp</a>. Use either to ask about your information or to make a privacy request.</p>
+<h2>Information we collect</h2>
+<p><strong>Information you give us.</strong> When you use our enquiry form, call us or message us, you may give us your name, phone number, the service you want, your property location, a preferred date and any details you add.</p>
+<p><strong>Technical information.</strong> Like most websites, standard technical data (such as IP address, browser and device type, and the pages visited) may be processed by our hosting provider and the third-party services the site uses. If we use analytics or advertising tools, they may also use cookies or similar technologies.</p>
+<h2>How the enquiry form works</h2>
+<p>The form on this site does not send your details to our web server. It opens WhatsApp with your enquiry pre-filled, and nothing is sent until you press Send in WhatsApp. Once sent, your message is handled by WhatsApp (Meta) under its own terms and privacy policy, and we receive it on our WhatsApp account.</p>
+<h2>How we use your information</h2>
+<ul><li>to reply to your enquiry, give a quote and confirm availability;</li><li>to arrange and carry out cleaning services;</li><li>to keep basic records and meet legal obligations;</li><li>to understand how the website is used and to measure and improve our advertising.</li></ul>
+<p>We do not sell your personal information.</p>
+<h2>Third parties</h2>
+<p>We rely on service providers to run this website, including website hosting (Vercel), image hosting (GitHub), web fonts (Google Fonts) and WhatsApp (Meta). If we advertise online, advertising platforms such as Google or Meta may collect information through cookies or pixels to measure and show ads. These providers have their own privacy policies.</p>
+<h2>Cookies and advertising</h2>
+<p>Where cookies or similar tools are used for analytics or advertising, they help us measure visits and show relevant ads. You can control cookies in your browser settings, and manage ad personalisation through your Google Ad Settings and Meta ad preferences.</p>
+<h2>How long we keep information</h2>
+<p>We keep enquiry and service information only as long as needed to respond to you, provide the service, keep reasonable business records and meet legal requirements.</p>
+<h2>Security</h2>
+<p>We take reasonable steps to protect the information we hold. No method of transmission or storage is completely secure, so we cannot guarantee absolute security.</p>
+<h2>Your rights</h2>
+<p>Under Kenya’s Data Protection Act, 2019, you may ask to access, correct or delete your personal information, object to certain uses, or withdraw consent you have given. Contact us using the details above. You may also complain to the Office of the Data Protection Commissioner.</p>
+<h2>Children</h2>
+<p>Our services and website are not directed at children under 18, and we do not knowingly collect their personal information.</p>
+<h2>Changes to this policy</h2>
+<p>We may update this policy from time to time. The latest version will always be on this page, with the date above.</p></div>"""
+    page = simple_page("Privacy Policy | Cleaning Services Kenya",
+                       "How Cleaning Services Kenya collects, uses and protects your personal information.", body)
+    (BASE_DIR / "privacy-policy").mkdir(exist_ok=True)
+    (BASE_DIR / "privacy-policy" / "index.html").write_text(page, encoding="utf-8")
 
 
 def main():
@@ -610,9 +652,11 @@ def main():
 
     loc_ok, tst_ok = update_homepage(valid_towns, testimonials)
     has_tst_page = write_testimonials_page(testimonials)
+    write_privacy_page()
 
     if SITE_URL:
         urls = [f"{SITE_URL}/", f"{SITE_URL}/{URL_PREFIX}/"] + [f"{SITE_URL}/{URL_PREFIX}/{s}/" for _, _, s in index_cards]
+        urls.append(f"{SITE_URL}/privacy-policy/")
         if has_tst_page:
             urls.append(f"{SITE_URL}/testimonials/")
         body = "\n".join(f"  <url><loc>{html.escape(u)}</loc></url>" for u in urls)
