@@ -321,7 +321,7 @@ def stars(n):
 
 
 def testimonial_card(t, hidden=False):
-    meta = " • ".join(x for x in [t["town"], t["date"]] if x)
+    meta = t["town"]
     return (
         f'<article class="testimonial-card"{" hidden" if hidden else ""}>'
         f'<div class="t-top"><span class="t-stars" aria-label="{t["rating"]} out of 5 stars">{"★" * t["rating"]}</span>'
