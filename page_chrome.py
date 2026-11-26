@@ -34,6 +34,28 @@ SERVICE_LINKS = [
     ("parapet-cleaning", "Parapet cleaning"),
 ]
 
+# Hand-written pages at /cleaning-services/<slug>/. Not rows in towns.csv.
+# generate_pages.py refuses these slugs so a town regen cannot replace them.
+NAIROBI_AREA_PAGES = [
+    ("westlands", "Westlands"),
+    ("kilimani", "Kilimani"),
+    ("kileleshwa", "Kileleshwa"),
+    ("lavington", "Lavington"),
+    ("karen", "Karen"),
+    ("runda", "Runda"),
+    ("kiambu-road", "Kiambu Road"),
+    ("nairobi-cbd", "Nairobi CBD"),
+    ("south-b", "South B"),
+    ("south-c", "South C"),
+]
+
+
+def nairobi_area_links_html() -> str:
+    return "".join(
+        f'<a href="/cleaning-services/{slug}/">{html.escape(label)}</a>'
+        for slug, label in NAIROBI_AREA_PAGES
+    )
+
 def organization_ref():
     """Stable identity for the service-area business.
 
@@ -200,6 +222,7 @@ def footer_html(whatsapp_url: str) -> str:
     <p>Professional care. Beautifully clean spaces.</p>
     <div class="footer-links">{service_links}<a href="/cleaning-services/">Locations</a><a href="/testimonials/">Testimonials</a><a href="/privacy-policy/">Privacy Policy</a></div>
     <small>© <span id="year"></span> Cleaning Services Kenya. All rights reserved. <span class="footer-credit">Made by <a href="/">Lumen Labs</a></span></small>
+    <nav class="footer-links footer-areas" aria-label="Areas we serve in Nairobi"><span>Nairobi areas</span>{nairobi_area_links_html()}</nav>
   </footer>
   <a class="floating-whatsapp" href="{html.escape(whatsapp_url, quote=True)}" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><span>◉</span><b>Chat with us</b></a>
   <a class="floating-call" href="tel:{PHONE_TEL}" aria-label="Call us"><span>☎</span><b>Call us</b></a>
