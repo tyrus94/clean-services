@@ -47,6 +47,11 @@ NAIROBI_AREA_PAGES = [
     ("nairobi-cbd", "Nairobi CBD"),
     ("south-b", "South B"),
     ("south-c", "South C"),
+    ("embakasi", "Embakasi"),
+    ("parklands", "Parklands"),
+    ("kasarani", "Kasarani"),
+    ("ruaka", "Ruaka"),
+    ("nairobi-west", "Nairobi West"),
 ]
 
 
