@@ -17,6 +17,10 @@ Inputs:
 Output:
     cleaning-services/<town-slug>/index.html
     cleaning-services/index.html
+    Hand-written Nairobi neighbourhood pages (see NAIROBI_AREA_PAGES in page_chrome.py)
+    are not generated here. Their URLs are appended to sitemap.xml, and matching
+    neighbourhood names in town_profiles.json are linked. Do not add those slugs
+    to towns.csv.
     testimonials/index.html   (only when testimonials.csv has rows)
     index.html                (Locations + Testimonials blocks between the markers are refreshed,
                                plus the homepage LocalBusiness JSON-LD between SCHEMA markers)
@@ -31,6 +35,7 @@ import csv, hashlib, html, json, os, random, re
 
 from page_chrome import (
     HOME_DESCRIPTION,
+    NAIROBI_AREA_PAGES,
     OG_IMAGE,
     PHONE_DISPLAY,
     PHONE_TEL,
@@ -39,6 +44,7 @@ from page_chrome import (
     breadcrumb_ld,
     breadcrumb_nav,
     json_ld_script,
+    nairobi_area_links_html,
     organization_ref,
     render_page,
     seo_tags,
@@ -51,6 +57,7 @@ TEMPLATE_FILE = BASE_DIR / "town-template.html"
 PROFILES_FILE = BASE_DIR / "town_profiles.json"
 TESTIMONIALS_FILE = BASE_DIR / "testimonials.csv"
 URL_PREFIX = "cleaning-services"          # town pages live at /cleaning-services/<town>/
+NAIROBI_AREA_SLUGS = {name: slug for slug, name in NAIROBI_AREA_PAGES}
 OUTPUT_DIR = BASE_DIR / URL_PREFIX
 TESTIMONIALS_DIR = BASE_DIR / "testimonials"
 HOME_FILE = BASE_DIR / "index.html"
@@ -440,10 +447,18 @@ def build_content(row, rows, profiles):
     if note:
         blocks.append(f'<p class="local-note">{html.escape(note)}</p>')
     if areas:
-        chips = "".join(f"<li>{html.escape(a)}</li>" for a in areas)
+        def area_chip(area: str) -> str:
+            label = html.escape(area)
+            slug = NAIROBI_AREA_SLUGS.get(area)
+            if slug:
+                return f'<li><a href="/{URL_PREFIX}/{slug}/">{label}</a></li>'
+            return f"<li>{label}</li>"
+
+        chips = "".join(area_chip(a) for a in areas)
+        link_class = " area-links" if any(a in NAIROBI_AREA_SLUGS for a in areas) else ""
         blocks.append(
             f'<div class="areas-block"><h3>Neighbourhoods in and around {html.escape(town)}</h3>'
-            f'<ul class="area-chips">{chips}</ul>'
+            f'<ul class="area-chips{link_class}">{chips}</ul>'
             f'<p class="areas-note">Not listed? Ask us. We’ll confirm whether we can reach you.</p></div>'
         )
     if near:
@@ -687,6 +702,13 @@ def main():
     valid_towns = load_towns()
     if not valid_towns:
         raise SystemExit("No valid towns found in towns.csv.")
+    reserved = set(NAIROBI_AREA_SLUGS.values())
+    clashes = [row["slug"] for row in valid_towns if row["slug"] in reserved]
+    if clashes:
+        raise SystemExit(
+            "These slugs are hand-written Nairobi neighbourhood pages and must not be "
+            "regenerated from towns.csv: " + ", ".join(clashes)
+        )
     profiles = load_profiles()
     testimonials = load_testimonials()
 
@@ -724,6 +746,7 @@ def main():
             "whatsapp_text": whatsapp_text,
             "phone_display": html.escape(PHONE_DISPLAY), "phone_tel": PHONE_TEL,
             "whatsapp_number": WHATSAPP_NUMBER,
+            "nairobi_area_links": nairobi_area_links_html(),
             "town_options": options, "other_town_options": options,
             "h1_html": c["h1_html"], "hero_description": c["hero_description"],
             "services_intro": c["services_intro"], "home_card_text": c["home_card_text"],
@@ -756,6 +779,8 @@ def main():
         '<p>Choose a town to enquire about residential or commercial cleaning. Service availability is confirmed individually.</p>'
         '<div class="areas-block"><h2>Services</h2>'
         f'<ul class="area-chips area-links">{service_chips}</ul></div>'
+        '<div class="areas-block"><h2>Areas we serve in Nairobi</h2>'
+        f'<ul class="area-chips area-links">{"".join(f"<li><a href=\"/{URL_PREFIX}/{html.escape(slug)}/\">{html.escape(name)}</a></li>" for slug, name in NAIROBI_AREA_PAGES)}</ul></div>'
         f'<ul class="town-directory">{links}</ul>'
     )
     (OUTPUT_DIR / "index.html").write_text(
@@ -790,6 +815,7 @@ def main():
     urls.extend(f"{SITE_URL}{path}" for path in service_paths())
     urls.append(f"{SITE_URL}/{URL_PREFIX}/")
     urls.extend(f"{SITE_URL}/{URL_PREFIX}/{slug}/" for _, _, slug in index_cards)
+    urls.extend(f"{SITE_URL}/{URL_PREFIX}/{slug}/" for slug, _name in NAIROBI_AREA_PAGES)
     if has_tst_page:
         urls.append(f"{SITE_URL}/testimonials/")
     urls.append(f"{SITE_URL}/privacy-policy/")
