@@ -50,8 +50,14 @@ NAIROBI_AREA_PAGES = [
     ("embakasi", "Embakasi"),
     ("parklands", "Parklands"),
     ("kasarani", "Kasarani"),
-    ("ruaka", "Ruaka"),
     ("nairobi-west", "Nairobi West"),
+]
+
+# Hand-written Kiambu County area pages at /cleaning-services/<slug>/.
+# Not rows in towns.csv; kept out of NAIROBI_AREA_PAGES while still protected
+# from town regen and listed under Kiambu County in the directory and sitemap.
+KIAMBU_AREA_PAGES = [
+    ("ruaka", "Ruaka"),
 ]
 
 
