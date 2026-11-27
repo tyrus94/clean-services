@@ -91,11 +91,14 @@
    ]
   },
   "karuri": {
-   "type": "commuter",
+   "type": "market",
    "areas": [
     "Banana",
-    "Ndenderu"
-   ]
+    "Ndenderu",
+    "Muchatha",
+    "Gachie"
+   ],
+   "note": "Covers Banana Hill, Ndenderu, Muchatha and Gachie across Karuri municipality. For apartment blocks in Ruaka near Two Rivers, use the dedicated Ruaka page."
   },
   "ongata-rongai": {
    "type": "commuter",
